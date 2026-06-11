@@ -612,39 +612,6 @@ function AnixlyUI:CreateWindow(config)
 
     padding(sidebar, 8, 8, 10, 10)
 
-    local logoCard = Instance.new("Frame")
-    logoCard.Name = "LogoCard"
-    logoCard.Size = UDim2.new(1, 0, 0, IsMobile and 72 or 86)
-    logoCard.BackgroundColor3 = theme.card
-    logoCard.BackgroundTransparency = 0.08
-    logoCard.BorderSizePixel = 0
-    logoCard.LayoutOrder = 0
-    logoCard.Parent = sidebar
-    corner(logoCard, 14)
-    stroke(logoCard, theme.accent, 1, 0.55)
-
-    local logoImage = Instance.new("ImageLabel")
-    logoImage.Name = "LogoImage"
-    logoImage.Size = UDim2.new(0, IsMobile and 44 or 54, 0, IsMobile and 44 or 54)
-    logoImage.Position = UDim2.new(0.5, -(IsMobile and 22 or 27), 0, 8)
-    logoImage.BackgroundTransparency = 1
-    logoImage.Image = window.Logo
-    logoImage.ImageColor3 = Color3.new(1, 1, 1)
-    logoImage.ScaleType = Enum.ScaleType.Crop
-    logoImage.Parent = logoCard
-    corner(logoImage, 12)
-
-    local logoText = Instance.new("TextLabel")
-    logoText.Size = UDim2.new(1, 0, 0, 18)
-    logoText.Position = UDim2.new(0, 0, 1, -22)
-    logoText.BackgroundTransparency = 1
-    logoText.Text = window.LogoText
-    logoText.TextColor3 = theme.accent
-    logoText.Font = Enum.Font.GothamBlack
-    logoText.TextSize = IsMobile and 10 or 11
-    logoText.TextXAlignment = Enum.TextXAlignment.Center
-    logoText.Parent = logoCard
-
     local content = Instance.new("Frame")
     content.Name = "Content"
     content.Size = UDim2.new(1, -(SIDEBAR_WIDTH + 12), 1, -(HEADER_HEIGHT + 12))
@@ -798,7 +765,6 @@ function AnixlyUI:CreateWindow(config)
         sidebar.BackgroundColor3 = theme.sidebar
         mini.BackgroundColor3 = theme.header
         mini.ImageColor3 = Color3.new(1, 1, 1)
-        logoText.TextColor3 = theme.accent
         resize.TextColor3 = theme.accent
 
         AnixlyUI:ShowNotification({
