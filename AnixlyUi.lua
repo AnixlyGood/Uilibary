@@ -498,8 +498,8 @@ function AnixlyUI:CreateWindow(config)
     window.Tabs = {}
     window.TabButtons = {}
     window.ConfigData = {}
-    window.MiniIcon = config.MiniIcon or config.Logo or "rbxassetid://101517365964699"
-    window.Logo = config.Logo or config.MiniIcon or "rbxassetid://101517365964699"
+    window.MiniIcon = config.MiniIcon or config.Logo or "rbxassetid://6421296794"
+    window.Logo = config.Logo or config.MiniIcon or "rbxassetid://6421296794"
     window.LogoText = config.LogoText or "ANIXLY"
 
     local theme = window.Theme

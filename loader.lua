@@ -2,14 +2,11 @@ repeat task.wait() until game:IsLoaded()
 
 local AnixlyUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/AnixlyGood/Uilibary/refs/heads/main/AnixlyUi.lua"))()
 
-local IMAGE_ID = "rbxassetid://101517365964699"
+local IMAGE_ID = "rbxassetid://6421296794"
 
 local Window = AnixlyUI:CreateWindow({
     Title = "Anixly Hub",
     Theme = "ANIXLY",
-    MiniIcon = IMAGE_ID,
-    Logo = IMAGE_ID,
-    LogoText = "ANIXLY HUB",
     Size = {
         Width = 520,
         Height = 390
