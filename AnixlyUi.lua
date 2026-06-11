@@ -548,13 +548,13 @@ function AnixlyUI:CreateWindow(config)
     header.Parent = main
 
     makeText(header, {
-        Text = "ANIXLY",
-        TextColor3 = theme.accent,
-        Font = Enum.Font.GothamBlack,
-        TextSize = IsMobile and 15 or 17,
-        Size = UDim2.new(0, 90, 1, 0),
-        Position = UDim2.new(0, 16, 0, 0)
-    })
+    Text = "",
+    TextColor3 = theme.accent,
+    Font = Enum.Font.GothamBlack,
+    TextSize = IsMobile and 15 or 17,
+    Size = UDim2.new(0, 20, 1, 0),
+    Position = UDim2.new(0, 16, 0, 0)
+   })
 
     makeText(header, {
         Text = window.Title,
