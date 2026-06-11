@@ -242,32 +242,33 @@ function AnixlyUI:ShowNotification(config)
         ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 24, 42)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 11, 20))
     }, 30)
-local icon
+
+    local icon
 
     if config.Icon then
-    icon = Instance.new("ImageLabel")
-    icon.Size = UDim2.new(0, 42, 0, 42)
-    icon.Position = UDim2.new(0, 14, 0.5, -21)
-    icon.BackgroundColor3 = accent
-    icon.BackgroundTransparency = 0.18
-    icon.Image = config.Icon
-    icon.ImageColor3 = Color3.new(1, 1, 1)
-    icon.ScaleType = Enum.ScaleType.Crop
-    icon.Parent = holder
-    corner(icon, 14)
-else
-    icon = Instance.new("TextLabel")
-    icon.Size = UDim2.new(0, 42, 0, 42)
-    icon.Position = UDim2.new(0, 14, 0.5, -21)
-    icon.BackgroundColor3 = accent
-    icon.BackgroundTransparency = 0.08
-    icon.Text = icons[themeName] or "i"
-    icon.TextColor3 = Color3.new(1, 1, 1)
-    icon.Font = Enum.Font.GothamBlack
-    icon.TextSize = 22
-    icon.Parent = holder
-    corner(icon, 14)
-end
+        icon = Instance.new("ImageLabel")
+        icon.Size = UDim2.new(0, 42, 0, 42)
+        icon.Position = UDim2.new(0, 14, 0.5, -21)
+        icon.BackgroundColor3 = accent
+        icon.BackgroundTransparency = 0.18
+        icon.Image = config.Icon
+        icon.ImageColor3 = Color3.new(1, 1, 1)
+        icon.ScaleType = Enum.ScaleType.Crop
+        icon.Parent = holder
+        corner(icon, 14)
+    else
+        icon = Instance.new("TextLabel")
+        icon.Size = UDim2.new(0, 42, 0, 42)
+        icon.Position = UDim2.new(0, 14, 0.5, -21)
+        icon.BackgroundColor3 = accent
+        icon.BackgroundTransparency = 0.08
+        icon.Text = icons[themeName] or "i"
+        icon.TextColor3 = Color3.new(1, 1, 1)
+        icon.Font = Enum.Font.GothamBlack
+        icon.TextSize = 22
+        icon.Parent = holder
+        corner(icon, 14)
+    end
 
     makeText(holder, {
         Text = title,
@@ -497,6 +498,9 @@ function AnixlyUI:CreateWindow(config)
     window.Tabs = {}
     window.TabButtons = {}
     window.ConfigData = {}
+    window.MiniIcon = config.MiniIcon or config.Logo or "rbxassetid://101517365964699"
+    window.Logo = config.Logo or config.MiniIcon or "rbxassetid://101517365964699"
+    window.LogoText = config.LogoText or "ANIXLY"
 
     local theme = window.Theme
 
@@ -607,7 +611,7 @@ function AnixlyUI:CreateWindow(config)
     sideList.Parent = sidebar
 
     padding(sidebar, 8, 8, 10, 10)
-    
+
     local logoCard = Instance.new("Frame")
     logoCard.Name = "LogoCard"
     logoCard.Size = UDim2.new(1, 0, 0, IsMobile and 72 or 86)
@@ -624,7 +628,7 @@ function AnixlyUI:CreateWindow(config)
     logoImage.Size = UDim2.new(0, IsMobile and 44 or 54, 0, IsMobile and 44 or 54)
     logoImage.Position = UDim2.new(0.5, -(IsMobile and 22 or 27), 0, 8)
     logoImage.BackgroundTransparency = 1
-    logoImage.Image = config.Logo or config.MiniIcon or "rbxassetid://101517365964699"
+    logoImage.Image = window.Logo
     logoImage.ImageColor3 = Color3.new(1, 1, 1)
     logoImage.ScaleType = Enum.ScaleType.Crop
     logoImage.Parent = logoCard
@@ -634,7 +638,7 @@ function AnixlyUI:CreateWindow(config)
     logoText.Size = UDim2.new(1, 0, 0, 18)
     logoText.Position = UDim2.new(0, 0, 1, -22)
     logoText.BackgroundTransparency = 1
-    logoText.Text = config.LogoText or "ANIXLY"
+    logoText.Text = window.LogoText
     logoText.TextColor3 = theme.accent
     logoText.Font = Enum.Font.GothamBlack
     logoText.TextSize = IsMobile and 10 or 11
@@ -652,7 +656,7 @@ function AnixlyUI:CreateWindow(config)
     mini.Size = UDim2.new(0, IsMobile and 50 or 58, 0, IsMobile and 50 or 58)
     mini.Position = UDim2.new(0, 18, 0.5, -29)
     mini.BackgroundColor3 = theme.header
-    mini.Image = config.MiniIcon or config.Logo or "rbxassetid://101517365964699"
+    mini.Image = window.MiniIcon
     mini.ImageColor3 = Color3.new(1, 1, 1)
     mini.ScaleType = Enum.ScaleType.Crop
     mini.Visible = false
@@ -793,7 +797,8 @@ function AnixlyUI:CreateWindow(config)
         header.BackgroundColor3 = theme.header
         sidebar.BackgroundColor3 = theme.sidebar
         mini.BackgroundColor3 = theme.header
-        mini.TextColor3 = theme.accent
+        mini.ImageColor3 = Color3.new(1, 1, 1)
+        logoText.TextColor3 = theme.accent
         resize.TextColor3 = theme.accent
 
         AnixlyUI:ShowNotification({
@@ -1346,6 +1351,40 @@ function AnixlyUI:CreateWindow(config)
                     end,
                     Get = function() return current end
                 }
+            end
+
+            function section:AddImage(cfg)
+                cfg = cfg or {}
+
+                local height = cfg.Height or 140
+                local frame = baseComponent(height)
+                frame.ClipsDescendants = true
+
+                local image = Instance.new("ImageLabel")
+                image.Name = "Image"
+                image.Size = UDim2.new(1, -18, 1, cfg.Text and -34 or -18)
+                image.Position = UDim2.new(0, 9, 0, 9)
+                image.BackgroundTransparency = 1
+                image.Image = cfg.Image or window.Logo
+                image.ImageColor3 = Color3.new(1, 1, 1)
+                image.ScaleType = cfg.ScaleType or Enum.ScaleType.Crop
+                image.Parent = frame
+                corner(image, cfg.Radius or 12)
+
+                if cfg.Text then
+                    local text = Instance.new("TextLabel")
+                    text.Size = UDim2.new(1, -18, 0, 22)
+                    text.Position = UDim2.new(0, 9, 1, -27)
+                    text.BackgroundTransparency = 1
+                    text.Text = cfg.Text
+                    text.TextColor3 = theme.accent
+                    text.Font = Enum.Font.GothamBlack
+                    text.TextSize = IsMobile and 11 or 12
+                    text.TextXAlignment = Enum.TextXAlignment.Center
+                    text.Parent = frame
+                end
+
+                return image
             end
 
             function section:AddProgressBar(cfg)
