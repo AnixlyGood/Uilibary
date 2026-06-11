@@ -242,8 +242,21 @@ function AnixlyUI:ShowNotification(config)
         ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 24, 42)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 11, 20))
     }, 30)
+local icon
 
-    local icon = Instance.new("TextLabel")
+    if config.Icon then
+    icon = Instance.new("ImageLabel")
+    icon.Size = UDim2.new(0, 42, 0, 42)
+    icon.Position = UDim2.new(0, 14, 0.5, -21)
+    icon.BackgroundColor3 = accent
+    icon.BackgroundTransparency = 0.18
+    icon.Image = config.Icon
+    icon.ImageColor3 = Color3.new(1, 1, 1)
+    icon.ScaleType = Enum.ScaleType.Crop
+    icon.Parent = holder
+    corner(icon, 14)
+else
+    icon = Instance.new("TextLabel")
     icon.Size = UDim2.new(0, 42, 0, 42)
     icon.Position = UDim2.new(0, 14, 0.5, -21)
     icon.BackgroundColor3 = accent
@@ -254,6 +267,7 @@ function AnixlyUI:ShowNotification(config)
     icon.TextSize = 22
     icon.Parent = holder
     corner(icon, 14)
+end
 
     makeText(holder, {
         Text = title,
@@ -593,6 +607,39 @@ function AnixlyUI:CreateWindow(config)
     sideList.Parent = sidebar
 
     padding(sidebar, 8, 8, 10, 10)
+    
+    local logoCard = Instance.new("Frame")
+    logoCard.Name = "LogoCard"
+    logoCard.Size = UDim2.new(1, 0, 0, IsMobile and 72 or 86)
+    logoCard.BackgroundColor3 = theme.card
+    logoCard.BackgroundTransparency = 0.08
+    logoCard.BorderSizePixel = 0
+    logoCard.LayoutOrder = 0
+    logoCard.Parent = sidebar
+    corner(logoCard, 14)
+    stroke(logoCard, theme.accent, 1, 0.55)
+
+    local logoImage = Instance.new("ImageLabel")
+    logoImage.Name = "LogoImage"
+    logoImage.Size = UDim2.new(0, IsMobile and 44 or 54, 0, IsMobile and 44 or 54)
+    logoImage.Position = UDim2.new(0.5, -(IsMobile and 22 or 27), 0, 8)
+    logoImage.BackgroundTransparency = 1
+    logoImage.Image = config.Logo or config.MiniIcon or "rbxassetid://101517365964699"
+    logoImage.ImageColor3 = Color3.new(1, 1, 1)
+    logoImage.ScaleType = Enum.ScaleType.Crop
+    logoImage.Parent = logoCard
+    corner(logoImage, 12)
+
+    local logoText = Instance.new("TextLabel")
+    logoText.Size = UDim2.new(1, 0, 0, 18)
+    logoText.Position = UDim2.new(0, 0, 1, -22)
+    logoText.BackgroundTransparency = 1
+    logoText.Text = config.LogoText or "ANIXLY"
+    logoText.TextColor3 = theme.accent
+    logoText.Font = Enum.Font.GothamBlack
+    logoText.TextSize = IsMobile and 10 or 11
+    logoText.TextXAlignment = Enum.TextXAlignment.Center
+    logoText.Parent = logoCard
 
     local content = Instance.new("Frame")
     content.Name = "Content"
@@ -601,14 +648,13 @@ function AnixlyUI:CreateWindow(config)
     content.BackgroundTransparency = 1
     content.Parent = main
 
-    local mini = Instance.new("TextButton")
+    local mini = Instance.new("ImageButton")
     mini.Size = UDim2.new(0, IsMobile and 50 or 58, 0, IsMobile and 50 or 58)
     mini.Position = UDim2.new(0, 18, 0.5, -29)
     mini.BackgroundColor3 = theme.header
-    mini.Text = "A"
-    mini.TextColor3 = theme.accent
-    mini.Font = Enum.Font.GothamBlack
-    mini.TextSize = IsMobile and 26 or 31
+    mini.Image = config.MiniIcon or config.Logo or "rbxassetid://101517365964699"
+    mini.ImageColor3 = Color3.new(1, 1, 1)
+    mini.ScaleType = Enum.ScaleType.Crop
     mini.Visible = false
     mini.AutoButtonColor = false
     mini.Parent = gui
