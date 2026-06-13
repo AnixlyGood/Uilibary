@@ -2,7 +2,7 @@ repeat task.wait() until game:IsLoaded()
 
 local AnixlyUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/AnixlyGood/Uilibary/refs/heads/main/AnixlyUi.lua"))()
 
-local IMAGE_ID = "rbxassetid://2061475061"
+local IMAGE_ID = "https://imgur.com/a/UAQbFpI.png"
 
 local Window = AnixlyUI:CreateWindow({
     Title = "Anixly Hub",
@@ -36,51 +36,14 @@ local userId = player.UserId
 local accountAge = os.date("%Y", os.time()) - 2006 -- Perkiraan, tapi akan diupdate dengan akurat
 
 DashboardSection:AddLabel("")
-DashboardSection:AddLabel("📊 USER INFORMATION")
-DashboardSection:AddLabel("───────────────────────────")
+DashboardSection:AddLabel("📊 INFORMATION:")
 DashboardSection:AddLabel("👤 Username: " .. player.Name)
 DashboardSection:AddLabel("🆔 User ID: " .. userId)
 DashboardSection:AddLabel("⭐ Display Name: " .. player.DisplayName)
-
--- Account Age (lebih akurat)
-local function getAccountAge()
-    local success, userInfo = pcall(function()
-        return game:GetService("HttpService"):JSONDecode(game:HttpGet("https://users.roblox.com/v1/users/" .. userId))
-    end)
-    if success and userInfo and userInfo.created then
-        local created = userInfo.created
-        local year = tonumber(string.sub(created, 1, 4))
-        local month = tonumber(string.sub(created, 6, 7))
-        local day = tonumber(string.sub(created, 9, 10))
-        local accountCreated = os.time({year = year, month = month, day = day})
-        local daysOld = math.floor((os.time() - accountCreated) / 86400)
-        return daysOld .. " days"
-    end
-    return "N/A"
-end
-
-DashboardSection:AddLabel("📅 Account Age: " .. getAccountAge())
-
--- Game Info
-DashboardSection:AddLabel("")
-DashboardSection:AddLabel("🎮 GAME INFORMATION")
-DashboardSection:AddLabel("───────────────────────────")
 DashboardSection:AddLabel("🎯 Game Name: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
 DashboardSection:AddLabel("🆔 Game ID: " .. game.PlaceId)
 DashboardSection:AddLabel("🌍 Server ID: " .. string.sub(game.JobId, 1, 8) .. "...")
 DashboardSection:AddLabel("👥 Players Online: " .. #game.Players:GetPlayers())
-
--- Hub Info
-DashboardSection:AddLabel("")
-DashboardSection:AddLabel("⚙️ HUB INFORMATION")
-DashboardSection:AddLabel("───────────────────────────")
-DashboardSection:AddLabel("📌 Hub Name: Anixly Hub")
-DashboardSection:AddLabel("🔢 Version: 1.0.0")
-DashboardSection:AddLabel("✅ Status: Online")
-DashboardSection:AddLabel("👨‍💻 Creator: Anixly")
-DashboardSection:AddLabel("📅 Last Update: 13/06/2026")
-DashboardSection:AddLabel("")
-DashboardSection:AddLabel("═══════════════════════════════")
 
 -- Live Stats (Update setiap detik)
 local function updateLiveStats()
@@ -91,11 +54,6 @@ local function updateLiveStats()
         -- Tapi karena UI library mungkin tidak support update, kita skip dulu
     end
 end
-
--- Buttons Section
-DashboardSection:AddLabel("")
-DashboardSection:AddLabel("🛠️ SERVER CONTROLS")
-DashboardSection:AddLabel("───────────────────────────")
 
 -- Rejoin Server Button
 DashboardSection:AddButton({
@@ -160,32 +118,6 @@ DashboardSection:AddButton({
         end
     end
 })
-
--- Copy Info Button
-DashboardSection:AddButton({
-    Text = "📋 Copy User Info",
-    Callback = function()
-        local infoToCopy = "Username: " .. player.Name .. "\nUser ID: " .. userId .. "\nGame: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
-        setclipboard(infoToCopy)
-        AnixlyUI:ShowNotification({
-            Title = "COPIED",
-            Message = "User info copied to clipboard!",
-            Theme = "success",
-            Icon = IMAGE_ID,
-            Duration = 2
-        })
-    end
-})
-
--- Credits Section
-DashboardSection:AddLabel("")
-DashboardSection:AddLabel("🎉 CREDITS & SOCIALS")
-DashboardSection:AddLabel("───────────────────────────")
-DashboardSection:AddLabel("💎 Thanks for using Anixly Hub!")
-DashboardSection:AddLabel("📧 Support: discord.gg/anixly")
-DashboardSection:AddLabel("⭐ Rate this hub 5 stars if you like it!")
-DashboardSection:AddLabel("")
-DashboardSection:AddLabel("═══════════════════════════════")
 
 local MainSection = MainTab:AddSection("Main")
 
@@ -381,8 +313,8 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
     end
 end)
 
--- Teleport Section
-local TeleportSection = TeleportTab:AddSection("🎯 Teleport to Player")
+--Teleport
+local TeleportSection = MainTab:AddSection("🎯 Teleport to Player")
 
 local playerDropdown = nil
 local currentPlayers = {}
