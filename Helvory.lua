@@ -4,9 +4,72 @@ local AnixlyUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Anix
 
 local IMAGE_ID = "https://imgur.com/a/UAQbFpI.png"
 
+-- Function to detect executor
+local function GetExecutor()
+    local executorNames = {
+        ["Synapse X"] = "Synapse X",
+        ["Krnl"] = "Krnl",
+        ["ScriptWare"] = "ScriptWare",
+        ["JJSploit"] = "JJSploit",
+        ["Fluxus"] = "Fluxus",
+        ["Oxygen U"] = "Oxygen U",
+        ["Electron"] = "Electron",
+        ["ProtoSmasher"] = "ProtoSmasher",
+        ["Sirhurt"] = "Sirhurt",
+        ["Valyse"] = "Valyse",
+        ["Calamari"] = "Calamari",
+        ["Comet"] = "Comet",
+        ["Evo"] = "Evo",
+        ["Kiwi X"] = "Kiwi X",
+        ["Nihon"] = "Nihon",
+        ["Pterodactyl"] = "Pterodactyl",
+        ["Sentinel"] = "Sentinel",
+        ["Solara"] = "Solara",
+        ["Swift"] = "Swift",
+        ["Delta"] = "Delta",
+        ["Arceus X"] = "Arceus X",
+        ["Hydrogen"] = "Hydrogen",
+        ["Vega X"] = "Vega X",
+        ["ZenX"] = "ZenX",
+        ["Xeno"] = "Xeno",
+        ["Atlas"] = "Atlas",
+        ["Celery"] = "Celery",
+        ["Coco"] = "Coco",
+        ["Dream"] = "Dream"
+    }
+    
+    for executor, name in pairs(executorNames) do
+        if syn and syn.crypt then
+            return "Synapse X"
+        elseif isfile and isfolder and not syn then
+            return "Krnl"
+        elseif getsenv and setreadonly then
+            return "ScriptWare"
+        elseif identifyexecutor then
+            local success, result = pcall(identifyexecutor)
+            if success and result then
+                return result
+            end
+        elseif game:GetService("CoreGui"):FindFirstChild("RobloxGui"):FindFirstChild("Fluxus") then
+            return "Fluxus"
+        end
+    end
+    
+    -- Check for common identifiers
+    local env = getsenv(game)
+    if env and env["_G"] then
+        if env._G.Synapse then return "Synapse X" end
+        if env._G.Krnl then return "Krnl" end
+    end
+    
+    return "Unknown Executor"
+end
+
+local executorName = GetExecutor()
+
 local Window = AnixlyUI:CreateWindow({
     Title = "Anixly Hub",
-    Subtitle = "Version 1.0.0",
+    Subtitle = "Version 1.0.0 | " .. executorName,
     Theme = "ANIXLY",
 
     MiniIcon = IMAGE_ID,
@@ -38,17 +101,10 @@ DashboardSection:AddLabel("📊 INFORMATION:")
 DashboardSection:AddLabel("👤 Username: " .. player.Name)
 DashboardSection:AddLabel("🆔 User ID: " .. userId)
 DashboardSection:AddLabel("⭐ Display Name: " .. player.DisplayName)
-
-local success, gameInfo = pcall(function()
-    return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
-end)
-
-if success and gameInfo then
-    DashboardSection:AddLabel("🎯 Game Name: " .. gameInfo.Name)
-end
 DashboardSection:AddLabel("🆔 Game ID: " .. game.PlaceId)
 DashboardSection:AddLabel("🌍 Server ID: " .. string.sub(game.JobId, 1, 8) .. "...")
 DashboardSection:AddLabel("👥 Players Online: " .. #game.Players:GetPlayers())
+DashboardSection:AddLabel("⚡ Executor: " .. executorName)
 
 -- Rejoin Server Button
 DashboardSection:AddButton({
@@ -522,7 +578,7 @@ local function UpdateAllESP()
 end
 
 ESPSection:AddToggle({
-    Text = "🔍 Enable ESP",
+    Text = "Enable ESP",
     Default = false,
     Callback = function(value)
         espEnabled = value
@@ -775,32 +831,20 @@ local function SetupVirtualUser()
     return false
 end
 
--- Method 2: Manual AFK bypass
-local function ManualAFKBypass()
+-- Method 2: Simple AFK bypass (gerak dikit)
+local function SimpleAFKBypass()
     local player = game.Players.LocalPlayer
-    if player and player.Character then
-        local humanoid = player.Character:FindFirstChild("Humanoid")
-        if humanoid then
-            -- Simulate movement
-            humanoid:MoveTo(humanoid.RootPart.Position + Vector3.new(0, 0, 1))
-            task.wait(0.1)
-            humanoid:MoveTo(humanoid.RootPart.Position)
-            
-            -- Simulate camera movement
-            game:GetService("UserInputService").InputBegan:Fire(mouse)
-            
-            -- Click on screen
-            local mouse = player:GetMouse()
-            if mouse then
-                mouse.Button1Down:Fire()
-                task.wait(0.1)
-                mouse.Button1Up:Fire()
-            end
-        end
+    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local rootPart = player.Character.HumanoidRootPart
+        local originalCF = rootPart.CFrame
+        -- Gerak maju sedikit lalu balik
+        rootPart.CFrame = rootPart.CFrame + rootPart.CFrame.LookVector * 0.1
+        task.wait(0.1)
+        rootPart.CFrame = originalCF
     end
 end
 
--- Method 3: Using WalkDummy patch (kode dari user)
+-- Method 3: Using WalkDummy patch
 local function PatchWalkDummy()
     local success, module = pcall(function()
         return require(game:GetService("Players").LocalPlayer.PlayerScripts.ClientMain.Replications.Workers.WalkDummy)
@@ -808,7 +852,7 @@ local function PatchWalkDummy()
     
     if success and module then
         local success2, oldFunction = pcall(function()
-            return getconstant(module, 34)
+            return getconstants(module)[34]
         end)
         
         if success2 then
@@ -825,50 +869,27 @@ end
 local function StartAntiAFK()
     if afkConnection then return end
     
-    local virtualUserSuccess = SetupVirtualUser()
-    local walkDummyPatched = PatchWalkDummy()
+    SetupVirtualUser()
+    PatchWalkDummy()
     
+    -- Simulasi gerakan setiap 30 detik
     afkConnection = game:GetService("RunService").Heartbeat:Connect(function()
         if antiAFKEnabled then
-            -- Method 1: VirtualUser
-            if virtualUserSuccess and virtualUser then
-                pcall(function()
-                    virtualUser:CaptureController()
-                    virtualUser:ClickButton2(Vector2.new())
-                    virtualUser:Button2Down(Vector2.new())
-                    virtualUser:Button2Up(Vector2.new())
-                end)
-            end
-            
-            -- Method 2: Manual bypass every 30 seconds
             if tick() % 30 < 0.1 then
-                ManualAFKBypass()
+                SimpleAFKBypass()
             end
-            
-            -- Method 3: Simulate user input
-            game:GetService("UserInputService").InputBegan:Connect(function()
-                -- Just to keep player active
-            end)
         end
     end)
     
-    -- Additional: Clicker every 60 seconds
+    -- VirtualUser click setiap 60 detik
     spawn(function()
         while antiAFKEnabled do
             task.wait(60)
-            if antiAFKEnabled then
-                -- Simulate key press (W key)
-                game:GetService("UserInputService").InputBegan:Fire(
-                    Enum.KeyCode.W,
-                    Enum.UserInputState.Begin,
-                    false
-                )
-                task.wait(0.1)
-                game:GetService("UserInputService").InputEnded:Fire(
-                    Enum.KeyCode.W,
-                    Enum.UserInputState.End,
-                    false
-                )
+            if antiAFKEnabled and virtualUser then
+                pcall(function()
+                    virtualUser:CaptureController()
+                    virtualUser:ClickButton2(Vector2.new())
+                end)
             end
         end
     end)
@@ -879,15 +900,6 @@ local function StopAntiAFK()
         afkConnection:Disconnect()
         afkConnection = nil
     end
-    
-    -- Restore WalkDummy if needed
-    pcall(function()
-        local module = require(game:GetService("Players").LocalPlayer.PlayerScripts.ClientMain.Replications.Workers.WalkDummy)
-        local oldFunc = getconstant(module, 34)
-        if oldFunc then
-            setconstant(module, 34, oldFunc)
-        end
-    end)
 end
 
 -- Anti AFK Toggle
@@ -900,7 +912,7 @@ AntiAFKSection:AddToggle({
             StartAntiAFK()
             AnixlyUI:ShowNotification({
                 Title = "ANTI AFK",
-                Message = "Anti AFK: Enabled - You won't be kicked for inactivity",
+                Message = "Anti AFK: Enabled",
                 Theme = "success",
                 Icon = IMAGE_ID,
                 Duration = 3
@@ -919,3 +931,4 @@ AntiAFKSection:AddToggle({
 })
 
 print("✅ Anixly Hub Loaded Successfully!")
+print("🚀 Executor: " .. executorName)
