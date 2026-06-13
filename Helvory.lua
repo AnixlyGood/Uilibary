@@ -21,16 +21,85 @@ local Window = AnixlyUI:CreateWindow({
 local DashboardTab = Window:CreateTab("Dashboard", "rbxassetid://6023426945")
 local MainTab = Window:CreateTab("Main", "rbxassetid://6023426926")
 local ESPTab = Window:CreateTab("ESP", "rbxassetid://6023426926")
+local TeleportTab = Window:CreateTab("Teleport", "rbxassetid://6023426926")
 
 local DashboardSection = DashboardTab:AddSection("Information")
 
-DashboardSection:AddLabel("Welcome to Anixly Hub.")
-DashboardSection:AddLabel("Version: 1.0.0")
-DashboardSection:AddLabel("Status: Online")
+-- Header Info
+DashboardSection:AddLabel("═══════════════════════════════")
+DashboardSection:AddLabel("       WELCOME TO ANIXLY HUB")
+DashboardSection:AddLabel("═══════════════════════════════")
+
+-- User Info
+local player = game.Players.LocalPlayer
+local userId = player.UserId
+local accountAge = os.date("%Y", os.time()) - 2006 -- Perkiraan, tapi akan diupdate dengan akurat
+
+DashboardSection:AddLabel("")
+DashboardSection:AddLabel("📊 USER INFORMATION")
+DashboardSection:AddLabel("───────────────────────────")
+DashboardSection:AddLabel("👤 Username: " .. player.Name)
+DashboardSection:AddLabel("🆔 User ID: " .. userId)
+DashboardSection:AddLabel("⭐ Display Name: " .. player.DisplayName)
+
+-- Account Age (lebih akurat)
+local function getAccountAge()
+    local success, userInfo = pcall(function()
+        return game:GetService("HttpService"):JSONDecode(game:HttpGet("https://users.roblox.com/v1/users/" .. userId))
+    end)
+    if success and userInfo and userInfo.created then
+        local created = userInfo.created
+        local year = tonumber(string.sub(created, 1, 4))
+        local month = tonumber(string.sub(created, 6, 7))
+        local day = tonumber(string.sub(created, 9, 10))
+        local accountCreated = os.time({year = year, month = month, day = day})
+        local daysOld = math.floor((os.time() - accountCreated) / 86400)
+        return daysOld .. " days"
+    end
+    return "N/A"
+end
+
+DashboardSection:AddLabel("📅 Account Age: " .. getAccountAge())
+
+-- Game Info
+DashboardSection:AddLabel("")
+DashboardSection:AddLabel("🎮 GAME INFORMATION")
+DashboardSection:AddLabel("───────────────────────────")
+DashboardSection:AddLabel("🎯 Game Name: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+DashboardSection:AddLabel("🆔 Game ID: " .. game.PlaceId)
+DashboardSection:AddLabel("🌍 Server ID: " .. string.sub(game.JobId, 1, 8) .. "...")
+DashboardSection:AddLabel("👥 Players Online: " .. #game.Players:GetPlayers())
+
+-- Hub Info
+DashboardSection:AddLabel("")
+DashboardSection:AddLabel("⚙️ HUB INFORMATION")
+DashboardSection:AddLabel("───────────────────────────")
+DashboardSection:AddLabel("📌 Hub Name: Anixly Hub")
+DashboardSection:AddLabel("🔢 Version: 1.0.0")
+DashboardSection:AddLabel("✅ Status: Online")
+DashboardSection:AddLabel("👨‍💻 Creator: Anixly")
+DashboardSection:AddLabel("📅 Last Update: 13/06/2026")
+DashboardSection:AddLabel("")
+DashboardSection:AddLabel("═══════════════════════════════")
+
+-- Live Stats (Update setiap detik)
+local function updateLiveStats()
+    while true do
+        task.wait(1)
+        -- Update players online
+        -- Note: Untuk update label, perlu reference ke label object
+        -- Tapi karena UI library mungkin tidak support update, kita skip dulu
+    end
+end
+
+-- Buttons Section
+DashboardSection:AddLabel("")
+DashboardSection:AddLabel("🛠️ SERVER CONTROLS")
+DashboardSection:AddLabel("───────────────────────────")
 
 -- Rejoin Server Button
 DashboardSection:AddButton({
-    Text = "Rejoin Server",
+    Text = "🔄 Rejoin Server",
     Callback = function()
         AnixlyUI:ShowNotification({
             Title = "REJOIN SERVER",
@@ -46,7 +115,7 @@ DashboardSection:AddButton({
 
 -- Server Hop Button
 DashboardSection:AddButton({
-    Text = "Server Hop",
+    Text = "🎲 Server Hop",
     Callback = function()
         AnixlyUI:ShowNotification({
             Title = "SERVER HOP",
@@ -92,7 +161,33 @@ DashboardSection:AddButton({
     end
 })
 
-local MainSection = MainTab:AddSection("Movement")
+-- Copy Info Button
+DashboardSection:AddButton({
+    Text = "📋 Copy User Info",
+    Callback = function()
+        local infoToCopy = "Username: " .. player.Name .. "\nUser ID: " .. userId .. "\nGame: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+        setclipboard(infoToCopy)
+        AnixlyUI:ShowNotification({
+            Title = "COPIED",
+            Message = "User info copied to clipboard!",
+            Theme = "success",
+            Icon = IMAGE_ID,
+            Duration = 2
+        })
+    end
+})
+
+-- Credits Section
+DashboardSection:AddLabel("")
+DashboardSection:AddLabel("🎉 CREDITS & SOCIALS")
+DashboardSection:AddLabel("───────────────────────────")
+DashboardSection:AddLabel("💎 Thanks for using Anixly Hub!")
+DashboardSection:AddLabel("📧 Support: discord.gg/anixly")
+DashboardSection:AddLabel("⭐ Rate this hub 5 stars if you like it!")
+DashboardSection:AddLabel("")
+DashboardSection:AddLabel("═══════════════════════════════")
+
+local MainSection = MainTab:AddSection("Main")
 
 -- Noclip
 local noclipEnabled = false
@@ -128,7 +223,7 @@ function DisableNoclip()
 end
 
 MainSection:AddToggle({
-    Text = "Noclip",
+    Text = "🚪 Noclip",
     Default = false,
     Callback = function(value)
         noclipEnabled = value
@@ -178,7 +273,7 @@ function DisableInfinityJump()
 end
 
 MainSection:AddToggle({
-    Text = "Infinity Jump",
+    Text = "🦘 Infinity Jump",
     Default = false,
     Callback = function(value)
         infinityJumpEnabled = value
@@ -207,12 +302,10 @@ MainSection:AddToggle({
 -- Speed Settings
 local speedEnabled = false
 local originalWalkspeed = 16
-local originalJumppower = 50
 local walkspeedValue = 50
-local jumppowerValue = 80
 
 MainSection:AddToggle({
-    Text = "Speed Hack",
+    Text = "⚡ Speed Hack",
     Default = false,
     Callback = function(value)
         speedEnabled = value
@@ -222,19 +315,16 @@ MainSection:AddToggle({
             if humanoid then
                 if value then
                     originalWalkspeed = humanoid.WalkSpeed
-                    originalJumppower = humanoid.JumpPower
                     humanoid.WalkSpeed = walkspeedValue
-                    humanoid.JumpPower = jumppowerValue
                     AnixlyUI:ShowNotification({
                         Title = "SPEED HACK",
-                        Message = "Speed Hack: Enabled (" .. walkspeedValue .. " WS, " .. jumppowerValue .. " JP)",
+                        Message = "Speed Hack: Enabled (" .. walkspeedValue .. " WS)",
                         Theme = "success",
                         Icon = IMAGE_ID,
                         Duration = 2
                     })
                 else
                     humanoid.WalkSpeed = originalWalkspeed
-                    humanoid.JumpPower = originalJumppower
                     AnixlyUI:ShowNotification({
                         Title = "SPEED HACK",
                         Message = "Speed Hack: Disabled",
@@ -249,7 +339,7 @@ MainSection:AddToggle({
 })
 
 MainSection:AddSlider({
-    Text = "WalkSpeed",
+    Text = "🏃 WalkSpeed",
     Min = 16,
     Max = 250,
     Default = 50,
@@ -274,32 +364,6 @@ MainSection:AddSlider({
     end
 })
 
-MainSection:AddSlider({
-    Text = "JumpPower",
-    Min = 50,
-    Max = 500,
-    Default = 80,
-    Callback = function(value)
-        jumppowerValue = value
-        if speedEnabled then
-            local character = game.Players.LocalPlayer.Character
-            if character then
-                local humanoid = character:FindFirstChild("Humanoid")
-                if humanoid then
-                    humanoid.JumpPower = value
-                end
-            end
-        end
-        AnixlyUI:ShowNotification({
-            Title = "JUMPPOWER",
-            Message = "JumpPower set to: " .. value,
-            Theme = "info",
-            Icon = IMAGE_ID,
-            Duration = 1
-        })
-    end
-})
-
 -- Auto update speed when character respawns
 game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
     task.wait(0.5)
@@ -307,7 +371,6 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
         local humanoid = character:FindFirstChild("Humanoid")
         if humanoid then
             humanoid.WalkSpeed = walkspeedValue
-            humanoid.JumpPower = jumppowerValue
         end
     end
     if noclipEnabled then
@@ -318,8 +381,117 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
     end
 end)
 
+-- Teleport Section
+local TeleportSection = TeleportTab:AddSection("🎯 Teleport to Player")
+
+local playerDropdown = nil
+local currentPlayers = {}
+
+-- Function to update player list
+local function UpdatePlayerList()
+    local players = {}
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            table.insert(players, player.Name)
+        end
+    end
+    return players
+end
+
+-- Function to refresh dropdown
+local function RefreshTeleportDropdown()
+    local players = UpdatePlayerList()
+    if playerDropdown then
+        playerDropdown:SetOptions(players)
+    end
+end
+
+-- Create dropdown for player selection
+playerDropdown = TeleportSection:AddDropdown({
+    Text = "👥 Select Player",
+    Options = UpdatePlayerList(),
+    Default = "Select Player",
+    Callback = function(option)
+        print("Selected player:", option)
+    end
+})
+
+-- Teleport button
+TeleportSection:AddButton({
+    Text = "✨ Teleport to Player",
+    Callback = function()
+        local selectedPlayer = playerDropdown.Value
+        if selectedPlayer and selectedPlayer ~= "Select Player" then
+            local target = game.Players:FindFirstChild(selectedPlayer)
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                local localPlayer = game.Players.LocalPlayer
+                if localPlayer and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    localPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+                    AnixlyUI:ShowNotification({
+                        Title = "TELEPORT",
+                        Message = "Teleported to " .. selectedPlayer,
+                        Theme = "success",
+                        Icon = IMAGE_ID,
+                        Duration = 2
+                    })
+                else
+                    AnixlyUI:ShowNotification({
+                        Title = "TELEPORT",
+                        Message = "Your character not found!",
+                        Theme = "error",
+                        Icon = IMAGE_ID,
+                        Duration = 2
+                    })
+                end
+            else
+                AnixlyUI:ShowNotification({
+                    Title = "TELEPORT",
+                    Message = "Target player not found or no character!",
+                    Theme = "error",
+                    Icon = IMAGE_ID,
+                    Duration = 2
+                })
+            end
+        else
+            AnixlyUI:ShowNotification({
+                Title = "TELEPORT",
+                Message = "Please select a player first!",
+                Theme = "warning",
+                Icon = IMAGE_ID,
+                Duration = 2
+            })
+        end
+    end
+})
+
+-- Refresh button
+TeleportSection:AddButton({
+    Text = "🔄 Refresh Player List",
+    Callback = function()
+        RefreshTeleportDropdown()
+        AnixlyUI:ShowNotification({
+            Title = "TELEPORT",
+            Message = "Player list refreshed!",
+            Theme = "info",
+            Icon = IMAGE_ID,
+            Duration = 2
+        })
+    end
+})
+
+-- Auto refresh player list when players join/leave
+game.Players.PlayerAdded:Connect(function()
+    task.wait(0.5)
+    RefreshTeleportDropdown()
+end)
+
+game.Players.PlayerRemoving:Connect(function()
+    task.wait(0.5)
+    RefreshTeleportDropdown()
+end)
+
 -- ESP Section
-local ESPSection = ESPTab:AddSection("ESP Settings")
+local ESPSection = ESPTab:AddSection("👁️ ESP Settings")
 
 local espEnabled = false
 local espObjects = {}
@@ -424,7 +596,7 @@ local function UpdateAllESP()
 end
 
 ESPSection:AddToggle({
-    Text = "Enable ESP",
+    Text = "🔍 Enable ESP",
     Default = false,
     Callback = function(value)
         espEnabled = value
@@ -494,7 +666,7 @@ ESPSection:AddToggle({
 })
 
 ESPSection:AddColorPicker({
-    Text = "ESP Color",
+    Text = "🎨 ESP Color",
     Default = Color3.fromRGB(255, 0, 0),
     Callback = function(color)
         for _, espObj in pairs(espObjects) do
@@ -506,7 +678,7 @@ ESPSection:AddColorPicker({
 })
 
 ESPSection:AddButton({
-    Text = "Refresh ESP",
+    Text = "🔄 Refresh ESP",
     Callback = function()
         if espEnabled then
             ClearAllESP()

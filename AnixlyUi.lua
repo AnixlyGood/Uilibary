@@ -1427,20 +1427,6 @@ function AnixlyUI:CreateWindow(config)
         return tab
     end
 
-    local settings = window:CreateTab("Settings", "rbxassetid://6023426945")
-    local themeSection = settings:AddSection("Theme Settings")
-
-    themeSection:AddDropdown({
-        Text = "Theme",
-        Options = AnixlyUI:GetThemes(),
-        Default = window.ThemeId,
-        Callback = function(selected)
-            window:SetTheme(selected)
-        end
-    })
-
-    themeSection:AddLabel("Anixly UI v" .. AnixlyUI.Version)
-
     return window
 end
 
