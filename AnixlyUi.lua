@@ -909,7 +909,7 @@ function AnixlyUI:CreateWindow(config)
             })
 
             local arrow = makeText(headerFrame, {
-                Text = "⌄",
+                Text = "▼",
                 TextColor3 = theme.accent,
                 Font = Enum.Font.GothamBlack,
                 TextSize = 18,
@@ -920,7 +920,7 @@ function AnixlyUI:CreateWindow(config)
 
             headerFrame.MouseButton1Click:Connect(function()
                 section.Expanded = not section.Expanded
-                arrow.Text = section.Expanded and "⌄" or "›"
+                arrow.Text = section.Expanded and "▼" or "▶"
                 for _, item in ipairs(section.Items) do
                     item.Visible = section.Expanded
                 end

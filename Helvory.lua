@@ -18,10 +18,10 @@ local Window = AnixlyUI:CreateWindow({
     }
 })
 
-local DashboardTab = Window:CreateTab("Dashboard", "rbxassetid://6023426945")
-local MainTab = Window:CreateTab("Main", "rbxassetid://6023426926")
-local ESPTab = Window:CreateTab("ESP", "rbxassetid://6023426926")
-local TeleportTab = Window:CreateTab("Teleport", "rbxassetid://6023426926")
+local DashboardTab = Window:CreateTab("Dashboard")
+local MainTab = Window:CreateTab("Main")
+local ESPTab = Window:CreateTab("ESP")
+local UtilityTab = Window:CreateTab("Utility")
 
 local DashboardSection = DashboardTab:AddSection("Information")
 
@@ -33,27 +33,22 @@ DashboardSection:AddLabel("═════════════════�
 -- User Info
 local player = game.Players.LocalPlayer
 local userId = player.UserId
-local accountAge = os.date("%Y", os.time()) - 2006 -- Perkiraan, tapi akan diupdate dengan akurat
 
-DashboardSection:AddLabel("")
 DashboardSection:AddLabel("📊 INFORMATION:")
 DashboardSection:AddLabel("👤 Username: " .. player.Name)
 DashboardSection:AddLabel("🆔 User ID: " .. userId)
 DashboardSection:AddLabel("⭐ Display Name: " .. player.DisplayName)
-DashboardSection:AddLabel("🎯 Game Name: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+
+local success, gameInfo = pcall(function()
+    return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
+end)
+
+if success and gameInfo then
+    DashboardSection:AddLabel("🎯 Game Name: " .. gameInfo.Name)
+end
 DashboardSection:AddLabel("🆔 Game ID: " .. game.PlaceId)
 DashboardSection:AddLabel("🌍 Server ID: " .. string.sub(game.JobId, 1, 8) .. "...")
 DashboardSection:AddLabel("👥 Players Online: " .. #game.Players:GetPlayers())
-
--- Live Stats (Update setiap detik)
-local function updateLiveStats()
-    while true do
-        task.wait(1)
-        -- Update players online
-        -- Note: Untuk update label, perlu reference ke label object
-        -- Tapi karena UI library mungkin tidak support update, kita skip dulu
-    end
-end
 
 -- Rejoin Server Button
 DashboardSection:AddButton({
@@ -313,11 +308,10 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
     end
 end)
 
---Teleport
+-- Teleport
 local TeleportSection = MainTab:AddSection("🎯 Teleport to Player")
 
 local playerDropdown = nil
-local currentPlayers = {}
 
 -- Function to update player list
 local function UpdatePlayerList()
@@ -423,7 +417,7 @@ game.Players.PlayerRemoving:Connect(function()
 end)
 
 -- ESP Section
-local ESPSection = ESPTab:AddSection("👁️ ESP Settings")
+local ESPSection = ESPTab:AddSection("👁️ ESP")
 
 local espEnabled = false
 local espObjects = {}
@@ -636,3 +630,292 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function()
         UpdateAllESP()
     end
 end)
+
+-- ==================== UTILITY SECTION ====================
+local UtilitySection = UtilityTab:AddSection("🛡️ Anti Admin")
+
+local adminKeywords = {
+    "admin", "mod", "moderator", "owner", "creator", "dev", "developer",
+    "staff", "manager", "super", "helper", "trial", "head",
+    "lead", "senior", "junior", "coordinator", "supervisor", "administrator"
+}
+
+local antiAdminEnabled = false
+local checkConnection = nil
+
+local function isAdminName(name)
+    local clean = name:lower():gsub("[^%a%d]", "")
+    for _, keyword in ipairs(adminKeywords) do
+        if clean:find(keyword, 1, true) then
+            return true, keyword
+        end
+    end
+    return false, nil
+end
+
+local function antiAdminCheck()
+    local localPlayer = game.Players.LocalPlayer
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player ~= localPlayer then
+            local isAdmin, keyword = isAdminName(player.Name)
+            if not isAdmin then
+                isAdmin, keyword = isAdminName(player.DisplayName)
+            end
+            if isAdmin then
+                print("🛡️ ADMIN DETECTED: " .. player.Name .. " [" .. keyword .. "] — Pindah server!")
+                
+                AnixlyUI:ShowNotification({
+                    Title = "⚠️ ADMIN DETECTED",
+                    Message = player.Name .. " [" .. keyword .. "] - Server hopping...",
+                    Theme = "error",
+                    Icon = IMAGE_ID,
+                    Duration = 5
+                })
+                
+                task.wait(1)
+                
+                local servers = {}
+                local success, result = pcall(function()
+                    return game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?limit=100"))
+                end)
+                
+                if success and result and result.data then
+                    for _, v in pairs(result.data) do
+                        if v.playing and v.id ~= game.JobId then
+                            table.insert(servers, v.id)
+                        end
+                    end
+                    
+                    if #servers > 0 then
+                        local randomServer = servers[math.random(1, #servers)]
+                        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, randomServer, game.Players.LocalPlayer)
+                    else
+                        game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
+                    end
+                else
+                    game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
+                end
+                return
+            end
+        end
+    end
+end
+
+local function StartAntiAdmin()
+    if checkConnection then return end
+    
+    antiAdminCheck()
+    
+    checkConnection = game:GetService("RunService").Stepped:Connect(function()
+        if antiAdminEnabled then
+            if tick() % 5 < 0.1 then
+                antiAdminCheck()
+            end
+        end
+    end)
+end
+
+local function StopAntiAdmin()
+    if checkConnection then
+        checkConnection:Disconnect()
+        checkConnection = nil
+    end
+end
+
+UtilitySection:AddToggle({
+    Text = "🛡️ Anti Admin",
+    Default = false,
+    Callback = function(value)
+        antiAdminEnabled = value
+        if value then
+            StartAntiAdmin()
+            AnixlyUI:ShowNotification({
+                Title = "ANTI ADMIN",
+                Message = "Anti Admin: Enabled",
+                Theme = "success",
+                Icon = IMAGE_ID,
+                Duration = 3
+            })
+        else
+            StopAntiAdmin()
+            AnixlyUI:ShowNotification({
+                Title = "ANTI ADMIN",
+                Message = "Anti Admin: Disabled",
+                Theme = "info",
+                Icon = IMAGE_ID,
+                Duration = 2
+            })
+        end
+    end
+})
+
+game.Players.PlayerAdded:Connect(function(player)
+    if antiAdminEnabled then
+        task.wait(1)
+        antiAdminCheck()
+    end
+end)
+
+-- ==================== ANTI AFK ====================
+local AntiAFKSection = UtilityTab:AddSection("💤 Anti AFK")
+
+local antiAFKEnabled = false
+local afkConnection = nil
+local virtualUser = nil
+
+-- Method 1: Using VirtualUser
+local function SetupVirtualUser()
+    local success, vu = pcall(function()
+        return game:GetService("VirtualUser")
+    end)
+    if success and vu then
+        virtualUser = vu
+        return true
+    end
+    return false
+end
+
+-- Method 2: Manual AFK bypass
+local function ManualAFKBypass()
+    local player = game.Players.LocalPlayer
+    if player and player.Character then
+        local humanoid = player.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            -- Simulate movement
+            humanoid:MoveTo(humanoid.RootPart.Position + Vector3.new(0, 0, 1))
+            task.wait(0.1)
+            humanoid:MoveTo(humanoid.RootPart.Position)
+            
+            -- Simulate camera movement
+            game:GetService("UserInputService").InputBegan:Fire(mouse)
+            
+            -- Click on screen
+            local mouse = player:GetMouse()
+            if mouse then
+                mouse.Button1Down:Fire()
+                task.wait(0.1)
+                mouse.Button1Up:Fire()
+            end
+        end
+    end
+end
+
+-- Method 3: Using WalkDummy patch (kode dari user)
+local function PatchWalkDummy()
+    local success, module = pcall(function()
+        return require(game:GetService("Players").LocalPlayer.PlayerScripts.ClientMain.Replications.Workers.WalkDummy)
+    end)
+    
+    if success and module then
+        local success2, oldFunction = pcall(function()
+            return getconstant(module, 34)
+        end)
+        
+        if success2 then
+            setconstant(module, 34, function()
+                game:GetService("RunService").Heartbeat:Wait()
+            end)
+            return true
+        end
+    end
+    return false
+end
+
+-- Main Anti AFK function
+local function StartAntiAFK()
+    if afkConnection then return end
+    
+    local virtualUserSuccess = SetupVirtualUser()
+    local walkDummyPatched = PatchWalkDummy()
+    
+    afkConnection = game:GetService("RunService").Heartbeat:Connect(function()
+        if antiAFKEnabled then
+            -- Method 1: VirtualUser
+            if virtualUserSuccess and virtualUser then
+                pcall(function()
+                    virtualUser:CaptureController()
+                    virtualUser:ClickButton2(Vector2.new())
+                    virtualUser:Button2Down(Vector2.new())
+                    virtualUser:Button2Up(Vector2.new())
+                end)
+            end
+            
+            -- Method 2: Manual bypass every 30 seconds
+            if tick() % 30 < 0.1 then
+                ManualAFKBypass()
+            end
+            
+            -- Method 3: Simulate user input
+            game:GetService("UserInputService").InputBegan:Connect(function()
+                -- Just to keep player active
+            end)
+        end
+    end)
+    
+    -- Additional: Clicker every 60 seconds
+    spawn(function()
+        while antiAFKEnabled do
+            task.wait(60)
+            if antiAFKEnabled then
+                -- Simulate key press (W key)
+                game:GetService("UserInputService").InputBegan:Fire(
+                    Enum.KeyCode.W,
+                    Enum.UserInputState.Begin,
+                    false
+                )
+                task.wait(0.1)
+                game:GetService("UserInputService").InputEnded:Fire(
+                    Enum.KeyCode.W,
+                    Enum.UserInputState.End,
+                    false
+                )
+            end
+        end
+    end)
+end
+
+local function StopAntiAFK()
+    if afkConnection then
+        afkConnection:Disconnect()
+        afkConnection = nil
+    end
+    
+    -- Restore WalkDummy if needed
+    pcall(function()
+        local module = require(game:GetService("Players").LocalPlayer.PlayerScripts.ClientMain.Replications.Workers.WalkDummy)
+        local oldFunc = getconstant(module, 34)
+        if oldFunc then
+            setconstant(module, 34, oldFunc)
+        end
+    end)
+end
+
+-- Anti AFK Toggle
+AntiAFKSection:AddToggle({
+    Text = "💤 Anti AFK",
+    Default = false,
+    Callback = function(value)
+        antiAFKEnabled = value
+        if value then
+            StartAntiAFK()
+            AnixlyUI:ShowNotification({
+                Title = "ANTI AFK",
+                Message = "Anti AFK: Enabled - You won't be kicked for inactivity",
+                Theme = "success",
+                Icon = IMAGE_ID,
+                Duration = 3
+            })
+        else
+            StopAntiAFK()
+            AnixlyUI:ShowNotification({
+                Title = "ANTI AFK",
+                Message = "Anti AFK: Disabled",
+                Theme = "info",
+                Icon = IMAGE_ID,
+                Duration = 2
+            })
+        end
+    end
+})
+
+print("✅ Anixly Hub Loaded Successfully!")
