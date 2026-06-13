@@ -573,17 +573,17 @@ function AnixlyUI:CreateWindow(config)
     controls.BackgroundTransparency = 1
     controls.Parent = header
 
-    local minimize = Instance.new("ImageButton")
-    minimize.Size = UDim2.new(0, 28, 0, 28)
-    minimize.Position = UDim2.new(0, 6, 0.5, -14)
-    minimize.BackgroundColor3 = theme.card2
-    minimize.Image = window.MinimizeIcon
-    minimize.ImageColor3 = Color3.new(1, 1, 1)
-    minimize.ScaleType = Enum.ScaleType.Crop
-    minimize.AutoButtonColor = false
-    minimize.Parent = controls
-    corner(minimize, 999)
-    local minimizeStroke = stroke(minimize, theme.accent, 1, 0.45)
+    local minimize = Instance.new("TextButton")
+minimize.Size = UDim2.new(0, 28, 0, 28)
+minimize.Position = UDim2.new(0, 6, 0.5, -14)
+minimize.BackgroundColor3 = theme.warning
+minimize.Text = "-"
+minimize.TextColor3 = Color3.fromRGB(40, 30, 0)
+minimize.Font = Enum.Font.GothamBlack
+minimize.TextSize = 20
+minimize.AutoButtonColor = false
+minimize.Parent = controls
+corner(minimize, 999)
 
     local close = Instance.new("ImageButton")
     close.Size = UDim2.new(0, 28, 0, 28)

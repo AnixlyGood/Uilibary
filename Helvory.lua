@@ -2,8 +2,6 @@ repeat task.wait() until game:IsLoaded()
 
 local AnixlyUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/AnixlyGood/Uilibary/refs/heads/main/AnixlyUi.lua"))()
 
-local IMAGE_ID = "https://imgur.com/a/UAQbFpI.png"
-
 -- Function to detect executor (with Delta support)
 local function GetExecutor()
     -- Check for getexecutorname (Krnl, Delta, etc)
@@ -60,9 +58,6 @@ local Window = AnixlyUI:CreateWindow({
     Title = "Anixly Hub",
     Subtitle = "Version 1.0.0 | " .. executorName,
     Theme = "ANIXLY",
-
-    MiniIcon = IMAGE_ID,
-    Logo = IMAGE_ID,
 
     Size = {
         Width = 540,
@@ -661,26 +656,26 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 -- ==================== UTILITY SECTION ====================
--- Anti Admin
-local AntiAdminSection = MainTab:AddSection("🛡️ Anti Admin")
+-- Anti Staff (formerly Anti Admin)
+local AntiStaffSection = UtilityTab:AddSection("🛡️ Anti Staff")
 
-local adminKeywords = {
+local staffKeywords = {
     "admin", "mod", "moderator", "owner", "creator", "dev", "developer",
     "staff", "manager", "super", "helper", "trial", "head",
-    "lead", "senior", "junior"
+    "lead", "senior", "junior", "coordinator", "supervisor", "gm", "game master"
 }
 
-local antiAdminEnabled = false
-local antiAdminConnection = nil
+local antiStaffEnabled = false
+local antiStaffConnection = nil
 
-local function CheckForAdmin()
+local function CheckForStaff()
     local localPlayer = game.Players.LocalPlayer
     for _, plr in ipairs(game.Players:GetPlayers()) do
         if plr ~= localPlayer then
             local nameLower = plr.Name:lower()
             local displayLower = plr.DisplayName:lower()
             
-            for _, keyword in ipairs(adminKeywords) do
+            for _, keyword in ipairs(staffKeywords) do
                 if nameLower:find(keyword) or displayLower:find(keyword) then
                     return true, plr.Name, keyword
                 end
@@ -690,15 +685,15 @@ local function CheckForAdmin()
     return false, nil, nil
 end
 
-local function StartAntiAdmin()
-    if antiAdminConnection then return end
+local function StartAntiStaff()
+    if antiStaffConnection then return end
     
-    antiAdminConnection = game:GetService("RunService").Heartbeat:Connect(function()
-        if antiAdminEnabled then
-            local found, name, keyword = CheckForAdmin()
+    antiStaffConnection = game:GetService("RunService").Heartbeat:Connect(function()
+        if antiStaffEnabled then
+            local found, name, keyword = CheckForStaff()
             if found then
                 AnixlyUI:ShowNotification({
-                    Title = "⚠️ ADMIN DETECTED",
+                    Title = "⚠️ STAFF DETECTED",
                     Message = name .. " [" .. keyword .. "] - Hopping server...",
                     Theme = "error",
                     Duration = 5
@@ -730,31 +725,31 @@ local function StartAntiAdmin()
     end)
 end
 
-local function StopAntiAdmin()
-    if antiAdminConnection then
-        antiAdminConnection:Disconnect()
-        antiAdminConnection = nil
+local function StopAntiStaff()
+    if antiStaffConnection then
+        antiStaffConnection:Disconnect()
+        antiStaffConnection = nil
     end
 end
 
-AntiAdminSection:AddToggle({
-    Text = "🛡️ Anti Admin",
+AntiStaffSection:AddToggle({
+    Text = "🛡️ Anti Staff",
     Default = false,
     Callback = function(value)
-        antiAdminEnabled = value
+        antiStaffEnabled = value
         if value then
-            StartAntiAdmin()
+            StartAntiStaff()
             AnixlyUI:ShowNotification({
-                Title = "ANTI ADMIN",
-                Message = "Anti Admin: Enabled",
+                Title = "ANTI STAFF",
+                Message = "Anti Staff: Enabled",
                 Theme = "success",
                 Duration = 2
             })
         else
-            StopAntiAdmin()
+            StopAntiStaff()
             AnixlyUI:ShowNotification({
-                Title = "ANTI ADMIN",
-                Message = "Anti Admin: Disabled",
+                Title = "ANTI STAFF",
+                Message = "Anti Staff: Disabled",
                 Theme = "info",
                 Duration = 2
             })
@@ -762,8 +757,8 @@ AntiAdminSection:AddToggle({
     end
 })
 
--- Anti AFK
-local AntiAFKSection = MainTab:AddSection("💤 Anti AFK")
+-- Anti AFK (keep as is)
+local AntiAFKSection = UtilityTab:AddSection("💤 Anti AFK")
 
 local antiAFKEnabled = false
 local afkConnection = nil
