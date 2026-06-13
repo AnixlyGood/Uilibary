@@ -4,62 +4,51 @@ local AnixlyUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Anix
 
 local IMAGE_ID = "https://imgur.com/a/UAQbFpI.png"
 
--- Function to detect executor
+-- Function to detect executor (with Delta support)
 local function GetExecutor()
-    local executorNames = {
-        ["Synapse X"] = "Synapse X",
-        ["Krnl"] = "Krnl",
-        ["ScriptWare"] = "ScriptWare",
-        ["JJSploit"] = "JJSploit",
-        ["Fluxus"] = "Fluxus",
-        ["Oxygen U"] = "Oxygen U",
-        ["Electron"] = "Electron",
-        ["ProtoSmasher"] = "ProtoSmasher",
-        ["Sirhurt"] = "Sirhurt",
-        ["Valyse"] = "Valyse",
-        ["Calamari"] = "Calamari",
-        ["Comet"] = "Comet",
-        ["Evo"] = "Evo",
-        ["Kiwi X"] = "Kiwi X",
-        ["Nihon"] = "Nihon",
-        ["Pterodactyl"] = "Pterodactyl",
-        ["Sentinel"] = "Sentinel",
-        ["Solara"] = "Solara",
-        ["Swift"] = "Swift",
-        ["Delta"] = "Delta",
-        ["Arceus X"] = "Arceus X",
-        ["Hydrogen"] = "Hydrogen",
-        ["Vega X"] = "Vega X",
-        ["ZenX"] = "ZenX",
-        ["Xeno"] = "Xeno",
-        ["Atlas"] = "Atlas",
-        ["Celery"] = "Celery",
-        ["Coco"] = "Coco",
-        ["Dream"] = "Dream"
-    }
-    
-    for executor, name in pairs(executorNames) do
-        if syn and syn.crypt then
-            return "Synapse X"
-        elseif isfile and isfolder and not syn then
-            return "Krnl"
-        elseif getsenv and setreadonly then
-            return "ScriptWare"
-        elseif identifyexecutor then
-            local success, result = pcall(identifyexecutor)
-            if success and result then
-                return result
-            end
-        elseif game:GetService("CoreGui"):FindFirstChild("RobloxGui"):FindFirstChild("Fluxus") then
-            return "Fluxus"
+    -- Check for getexecutorname (Krnl, Delta, etc)
+    local success, result = pcall(function()
+        return getexecutorname()
+    end)
+    if success and result then
+        if result:find("Delta") or result:find("DELTA") then
+            return "Delta"
         end
+        return result
     end
     
-    -- Check for common identifiers
-    local env = getsenv(game)
-    if env and env["_G"] then
-        if env._G.Synapse then return "Synapse X" end
-        if env._G.Krnl then return "Krnl" end
+    -- Check for Delta specific
+    if game:GetService("CoreGui"):FindFirstChild("Delta") then
+        return "Delta"
+    end
+    
+    if game:GetService("CoreGui"):FindFirstChild("Delta Hub") then
+        return "Delta"
+    end
+    
+    -- Check for Synapse
+    if syn then
+        return "Synapse X"
+    end
+    
+    -- Check for ScriptWare
+    if getsenv and setreadonly then
+        return "ScriptWare"
+    end
+    
+    -- Check for Krnl
+    if isfile and isfolder and not syn then
+        return "Krnl"
+    end
+    
+    -- Check for Fluxus
+    if game:GetService("CoreGui"):FindFirstChild("Fluxus") then
+        return "Fluxus"
+    end
+    
+    -- Check for Electron
+    if game:GetService("CoreGui"):FindFirstChild("Electron") then
+        return "Electron"
     end
     
     return "Unknown Executor"
@@ -688,41 +677,45 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 -- ==================== UTILITY SECTION ====================
-local UtilitySection = UtilityTab:AddSection("🛡️ Anti Admin")
+-- Anti Admin
+local AntiAdminSection = MainTab:AddSection("🛡️ Anti Admin")
 
 local adminKeywords = {
     "admin", "mod", "moderator", "owner", "creator", "dev", "developer",
     "staff", "manager", "super", "helper", "trial", "head",
-    "lead", "senior", "junior", "coordinator", "supervisor", "administrator"
+    "lead", "senior", "junior"
 }
 
 local antiAdminEnabled = false
-local checkConnection = nil
+local antiAdminConnection = nil
 
-local function isAdminName(name)
-    local clean = name:lower():gsub("[^%a%d]", "")
-    for _, keyword in ipairs(adminKeywords) do
-        if clean:find(keyword, 1, true) then
-            return true, keyword
+local function CheckForAdmin()
+    local localPlayer = game.Players.LocalPlayer
+    for _, plr in ipairs(game.Players:GetPlayers()) do
+        if plr ~= localPlayer then
+            local nameLower = plr.Name:lower()
+            local displayLower = plr.DisplayName:lower()
+            
+            for _, keyword in ipairs(adminKeywords) do
+                if nameLower:find(keyword) or displayLower:find(keyword) then
+                    return true, plr.Name, keyword
+                end
+            end
         end
     end
-    return false, nil
+    return false, nil, nil
 end
 
-local function antiAdminCheck()
-    local localPlayer = game.Players.LocalPlayer
-    for _, player in ipairs(game.Players:GetPlayers()) do
-        if player ~= localPlayer then
-            local isAdmin, keyword = isAdminName(player.Name)
-            if not isAdmin then
-                isAdmin, keyword = isAdminName(player.DisplayName)
-            end
-            if isAdmin then
-                print("🛡️ ADMIN DETECTED: " .. player.Name .. " [" .. keyword .. "] — Pindah server!")
-                
+local function StartAntiAdmin()
+    if antiAdminConnection then return end
+    
+    antiAdminConnection = game:GetService("RunService").Heartbeat:Connect(function()
+        if antiAdminEnabled then
+            local found, name, keyword = CheckForAdmin()
+            if found then
                 AnixlyUI:ShowNotification({
                     Title = "⚠️ ADMIN DETECTED",
-                    Message = player.Name .. " [" .. keyword .. "] - Server hopping...",
+                    Message = name .. " [" .. keyword .. "] - Hopping server...",
                     Theme = "error",
                     Icon = IMAGE_ID,
                     Duration = 5
@@ -730,6 +723,7 @@ local function antiAdminCheck()
                 
                 task.wait(1)
                 
+                -- Server hop
                 local servers = {}
                 local success, result = pcall(function()
                     return game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?limit=100"))
@@ -743,42 +737,24 @@ local function antiAdminCheck()
                     end
                     
                     if #servers > 0 then
-                        local randomServer = servers[math.random(1, #servers)]
-                        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, randomServer, game.Players.LocalPlayer)
+                        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], game.Players.LocalPlayer)
                     else
                         game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
                     end
-                else
-                    game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
                 end
-                return
-            end
-        end
-    end
-end
-
-local function StartAntiAdmin()
-    if checkConnection then return end
-    
-    antiAdminCheck()
-    
-    checkConnection = game:GetService("RunService").Stepped:Connect(function()
-        if antiAdminEnabled then
-            if tick() % 5 < 0.1 then
-                antiAdminCheck()
             end
         end
     end)
 end
 
 local function StopAntiAdmin()
-    if checkConnection then
-        checkConnection:Disconnect()
-        checkConnection = nil
+    if antiAdminConnection then
+        antiAdminConnection:Disconnect()
+        antiAdminConnection = nil
     end
 end
 
-UtilitySection:AddToggle({
+AntiAdminSection:AddToggle({
     Text = "🛡️ Anti Admin",
     Default = false,
     Callback = function(value)
@@ -790,7 +766,7 @@ UtilitySection:AddToggle({
                 Message = "Anti Admin: Enabled",
                 Theme = "success",
                 Icon = IMAGE_ID,
-                Duration = 3
+                Duration = 2
             })
         else
             StopAntiAdmin()
@@ -805,91 +781,28 @@ UtilitySection:AddToggle({
     end
 })
 
-game.Players.PlayerAdded:Connect(function(player)
-    if antiAdminEnabled then
-        task.wait(1)
-        antiAdminCheck()
-    end
-end)
-
--- ==================== ANTI AFK ====================
-local AntiAFKSection = UtilityTab:AddSection("💤 Anti AFK")
+-- Anti AFK
+local AntiAFKSection = MainTab:AddSection("💤 Anti AFK")
 
 local antiAFKEnabled = false
 local afkConnection = nil
-local virtualUser = nil
+local lastInput = tick()
 
--- Method 1: Using VirtualUser
-local function SetupVirtualUser()
-    local success, vu = pcall(function()
-        return game:GetService("VirtualUser")
-    end)
-    if success and vu then
-        virtualUser = vu
-        return true
-    end
-    return false
+local function SimulateInput()
+    local UserInputService = game:GetService("UserInputService")
+    UserInputService.InputBegan:Fire(Enum.KeyCode.W, Enum.UserInputState.Begin)
+    task.wait(0.1)
+    UserInputService.InputEnded:Fire(Enum.KeyCode.W, Enum.UserInputState.End)
 end
 
--- Method 2: Simple AFK bypass (gerak dikit)
-local function SimpleAFKBypass()
-    local player = game.Players.LocalPlayer
-    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        local rootPart = player.Character.HumanoidRootPart
-        local originalCF = rootPart.CFrame
-        -- Gerak maju sedikit lalu balik
-        rootPart.CFrame = rootPart.CFrame + rootPart.CFrame.LookVector * 0.1
-        task.wait(0.1)
-        rootPart.CFrame = originalCF
-    end
-end
-
--- Method 3: Using WalkDummy patch
-local function PatchWalkDummy()
-    local success, module = pcall(function()
-        return require(game:GetService("Players").LocalPlayer.PlayerScripts.ClientMain.Replications.Workers.WalkDummy)
-    end)
-    
-    if success and module then
-        local success2, oldFunction = pcall(function()
-            return getconstants(module)[34]
-        end)
-        
-        if success2 then
-            setconstant(module, 34, function()
-                game:GetService("RunService").Heartbeat:Wait()
-            end)
-            return true
-        end
-    end
-    return false
-end
-
--- Main Anti AFK function
 local function StartAntiAFK()
     if afkConnection then return end
     
-    SetupVirtualUser()
-    PatchWalkDummy()
-    
-    -- Simulasi gerakan setiap 30 detik
     afkConnection = game:GetService("RunService").Heartbeat:Connect(function()
         if antiAFKEnabled then
-            if tick() % 30 < 0.1 then
-                SimpleAFKBypass()
-            end
-        end
-    end)
-    
-    -- VirtualUser click setiap 60 detik
-    spawn(function()
-        while antiAFKEnabled do
-            task.wait(60)
-            if antiAFKEnabled and virtualUser then
-                pcall(function()
-                    virtualUser:CaptureController()
-                    virtualUser:ClickButton2(Vector2.new())
-                end)
+            if tick() - lastInput > 50 then
+                SimulateInput()
+                lastInput = tick()
             end
         end
     end)
@@ -902,7 +815,6 @@ local function StopAntiAFK()
     end
 end
 
--- Anti AFK Toggle
 AntiAFKSection:AddToggle({
     Text = "💤 Anti AFK",
     Default = false,
@@ -915,7 +827,7 @@ AntiAFKSection:AddToggle({
                 Message = "Anti AFK: Enabled",
                 Theme = "success",
                 Icon = IMAGE_ID,
-                Duration = 3
+                Duration = 2
             })
         else
             StopAntiAFK()
