@@ -28,22 +28,73 @@ DashboardSection:AddLabel("Welcome to Anixly Hub.")
 DashboardSection:AddLabel("Version: 1.0.0")
 DashboardSection:AddLabel("Status: Online")
 
+-- Rejoin Server Button
 DashboardSection:AddButton({
-    Text = "Show Info",
+    Text = "Rejoin Server",
     Callback = function()
         AnixlyUI:ShowNotification({
-            Title = "ANIXLY HUB",
-            Message = "Anixly Hub v1.0.0 berhasil dimuat.",
-            Theme = "info",
+            Title = "REJOIN SERVER",
+            Message = "Rejoining server...",
+            Theme = "warning",
             Icon = IMAGE_ID,
-            Duration = 3
+            Duration = 2
         })
+        task.wait(1)
+        game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
     end
 })
 
-local MainSection = MainTab:AddSection("Main Menu")
+-- Server Hop Button
+DashboardSection:AddButton({
+    Text = "Server Hop",
+    Callback = function()
+        AnixlyUI:ShowNotification({
+            Title = "SERVER HOP",
+            Message = "Searching for new server...",
+            Theme = "warning",
+            Icon = IMAGE_ID,
+            Duration = 2
+        })
+        
+        local servers = {}
+        local success, result = pcall(function()
+            return game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?limit=100"))
+        end)
+        
+        if success and result and result.data then
+            for _, v in pairs(result.data) do
+                if v.playing and v.id ~= game.JobId then
+                    table.insert(servers, v.id)
+                end
+            end
+            
+            if #servers > 0 then
+                local randomServer = servers[math.random(1, #servers)]
+                game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, randomServer, game.Players.LocalPlayer)
+            else
+                AnixlyUI:ShowNotification({
+                    Title = "SERVER HOP",
+                    Message = "No other servers found!",
+                    Theme = "error",
+                    Icon = IMAGE_ID,
+                    Duration = 3
+                })
+            end
+        else
+            AnixlyUI:ShowNotification({
+                Title = "SERVER HOP",
+                Message = "Failed to fetch servers!",
+                Theme = "error",
+                Icon = IMAGE_ID,
+                Duration = 3
+            })
+        end
+    end
+})
 
--- Noclip yang berfungsi
+local MainSection = MainTab:AddSection("Movement")
+
+-- Noclip
 local noclipEnabled = false
 local noclipConnection = nil
 
@@ -103,22 +154,169 @@ MainSection:AddToggle({
     end
 })
 
-MainSection:AddDropdown({
-    Text = "Select Teleport Cp",
-    Options = {"Cp1", "Fast", "Ultra"},
-    Default = "Normal",
-    Callback = function(option)
-        print("Mode:", option)
+-- Infinity Jump
+local infinityJumpEnabled = false
+local jumpConnection = nil
 
+function EnableInfinityJump()
+    if jumpConnection then return end
+    jumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
+        if infinityJumpEnabled and game.Players.LocalPlayer.Character then
+            local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+            if humanoid and humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end)
+end
+
+function DisableInfinityJump()
+    if jumpConnection then
+        jumpConnection:Disconnect()
+        jumpConnection = nil
+    end
+end
+
+MainSection:AddToggle({
+    Text = "Infinity Jump",
+    Default = false,
+    Callback = function(value)
+        infinityJumpEnabled = value
+        if value then
+            EnableInfinityJump()
+            AnixlyUI:ShowNotification({
+                Title = "INFINITY JUMP",
+                Message = "Infinity Jump: Enabled",
+                Theme = "success",
+                Icon = IMAGE_ID,
+                Duration = 2
+            })
+        else
+            DisableInfinityJump()
+            AnixlyUI:ShowNotification({
+                Title = "INFINITY JUMP",
+                Message = "Infinity Jump: Disabled",
+                Theme = "info",
+                Icon = IMAGE_ID,
+                Duration = 2
+            })
+        end
+    end
+})
+
+-- Speed Settings
+local speedEnabled = false
+local originalWalkspeed = 16
+local originalJumppower = 50
+local walkspeedValue = 50
+local jumppowerValue = 80
+
+MainSection:AddToggle({
+    Text = "Speed Hack",
+    Default = false,
+    Callback = function(value)
+        speedEnabled = value
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            local humanoid = character:FindFirstChild("Humanoid")
+            if humanoid then
+                if value then
+                    originalWalkspeed = humanoid.WalkSpeed
+                    originalJumppower = humanoid.JumpPower
+                    humanoid.WalkSpeed = walkspeedValue
+                    humanoid.JumpPower = jumppowerValue
+                    AnixlyUI:ShowNotification({
+                        Title = "SPEED HACK",
+                        Message = "Speed Hack: Enabled (" .. walkspeedValue .. " WS, " .. jumppowerValue .. " JP)",
+                        Theme = "success",
+                        Icon = IMAGE_ID,
+                        Duration = 2
+                    })
+                else
+                    humanoid.WalkSpeed = originalWalkspeed
+                    humanoid.JumpPower = originalJumppower
+                    AnixlyUI:ShowNotification({
+                        Title = "SPEED HACK",
+                        Message = "Speed Hack: Disabled",
+                        Theme = "info",
+                        Icon = IMAGE_ID,
+                        Duration = 2
+                    })
+                end
+            end
+        end
+    end
+})
+
+MainSection:AddSlider({
+    Text = "WalkSpeed",
+    Min = 16,
+    Max = 250,
+    Default = 50,
+    Callback = function(value)
+        walkspeedValue = value
+        if speedEnabled then
+            local character = game.Players.LocalPlayer.Character
+            if character then
+                local humanoid = character:FindFirstChild("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = value
+                end
+            end
+        end
         AnixlyUI:ShowNotification({
-            Title = "Teleport Cp",
-            Message = "Cp: " .. tostring(option),
-            Theme = "success",
+            Title = "WALKSPEED",
+            Message = "WalkSpeed set to: " .. value,
+            Theme = "info",
             Icon = IMAGE_ID,
-            Duration = 2
+            Duration = 1
         })
     end
 })
+
+MainSection:AddSlider({
+    Text = "JumpPower",
+    Min = 50,
+    Max = 500,
+    Default = 80,
+    Callback = function(value)
+        jumppowerValue = value
+        if speedEnabled then
+            local character = game.Players.LocalPlayer.Character
+            if character then
+                local humanoid = character:FindFirstChild("Humanoid")
+                if humanoid then
+                    humanoid.JumpPower = value
+                end
+            end
+        end
+        AnixlyUI:ShowNotification({
+            Title = "JUMPPOWER",
+            Message = "JumpPower set to: " .. value,
+            Theme = "info",
+            Icon = IMAGE_ID,
+            Duration = 1
+        })
+    end
+})
+
+-- Auto update speed when character respawns
+game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
+    task.wait(0.5)
+    if speedEnabled then
+        local humanoid = character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = walkspeedValue
+            humanoid.JumpPower = jumppowerValue
+        end
+    end
+    if noclipEnabled then
+        EnableNoclip()
+    end
+    if infinityJumpEnabled then
+        EnableInfinityJump()
+    end
+end)
 
 -- ESP Section
 local ESPSection = ESPTab:AddSection("ESP Settings")
@@ -127,7 +325,6 @@ local espEnabled = false
 local espObjects = {}
 local playerList = {}
 
--- Fungsi untuk membuat ESP
 local function CreateESP(player)
     if not player or not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
         return nil
@@ -137,12 +334,11 @@ local function CreateESP(player)
     highlight.Name = "ESP_Highlight"
     highlight.FillTransparency = 0.5
     highlight.OutlineTransparency = 0
-    highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Warna merah untuk musuh/enemy
+    highlight.FillColor = Color3.fromRGB(255, 0, 0)
     highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
     highlight.Adornee = player.Character
     highlight.Parent = player.Character
     
-    -- BillBoardGui untuk nama dan jarak
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "ESP_Billboard"
     billboard.Size = UDim2.new(0, 200, 0, 50)
@@ -163,7 +359,6 @@ local function CreateESP(player)
     return {highlight = highlight, billboard = billboard, textLabel = textLabel}
 end
 
--- Fungsi untuk update jarak
 local function UpdateDistance()
     local localPlayer = game.Players.LocalPlayer
     if not localPlayer or not localPlayer.Character or not localPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -180,20 +375,18 @@ local function UpdateDistance()
                 local formattedDistance = string.format("%.1f", distance)
                 espObj.textLabel.Text = player.Name .. " [" .. formattedDistance .. "m]"
                 
-                -- Ubah warna berdasarkan jarak
                 if distance < 20 then
-                    espObj.textLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- Merah (dekat)
+                    espObj.textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
                 elseif distance < 50 then
-                    espObj.textLabel.TextColor3 = Color3.fromRGB(255, 165, 0) -- Orange (sedang)
+                    espObj.textLabel.TextColor3 = Color3.fromRGB(255, 165, 0)
                 else
-                    espObj.textLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- Putih (jauh)
+                    espObj.textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
                 end
             end
         end
     end
 end
 
--- Fungsi untuk menghapus ESP
 local function RemoveESP(player)
     local espObj = espObjects[player]
     if espObj then
@@ -203,7 +396,6 @@ local function RemoveESP(player)
     end
 end
 
--- Fungsi untuk membersihkan semua ESP
 local function ClearAllESP()
     for player, espObj in pairs(espObjects) do
         if espObj.highlight then espObj.highlight:Destroy() end
@@ -212,7 +404,6 @@ local function ClearAllESP()
     espObjects = {}
 end
 
--- Fungsi untuk update semua ESP
 local function UpdateAllESP()
     if not espEnabled then return end
     
@@ -232,7 +423,6 @@ local function UpdateAllESP()
     end
 end
 
--- ESP Toggle
 ESPSection:AddToggle({
     Text = "Enable ESP",
     Default = false,
@@ -240,7 +430,6 @@ ESPSection:AddToggle({
         espEnabled = value
         
         if value then
-            -- Update player list
             playerList = {}
             for _, player in ipairs(game.Players:GetPlayers()) do
                 if player ~= game.Players.LocalPlayer then
@@ -248,10 +437,8 @@ ESPSection:AddToggle({
                 end
             end
             
-            -- Buat ESP untuk semua pemain
             UpdateAllESP()
             
-            -- Update jarak setiap detik
             spawn(function()
                 while espEnabled do
                     UpdateDistance()
@@ -259,9 +446,9 @@ ESPSection:AddToggle({
                 end
             end)
             
-            -- Monitor karakter yang masuk/keluar
             game.Players.PlayerAdded:Connect(function(player)
                 if espEnabled and player ~= game.Players.LocalPlayer then
+                    table.insert(playerList, player)
                     player.CharacterAdded:Connect(function()
                         task.wait(0.5)
                         if espEnabled and player.Character then
@@ -275,6 +462,12 @@ ESPSection:AddToggle({
             
             game.Players.PlayerRemoving:Connect(function(player)
                 if espEnabled then
+                    for i, p in ipairs(playerList) do
+                        if p == player then
+                            table.remove(playerList, i)
+                            break
+                        end
+                    end
                     RemoveESP(player)
                 end
             end)
@@ -288,6 +481,7 @@ ESPSection:AddToggle({
             })
         else
             ClearAllESP()
+            playerList = {}
             AnixlyUI:ShowNotification({
                 Title = "ESP",
                 Message = "ESP Disabled",
@@ -299,7 +493,6 @@ ESPSection:AddToggle({
     end
 })
 
--- Pengaturan warna ESP
 ESPSection:AddColorPicker({
     Text = "ESP Color",
     Default = Color3.fromRGB(255, 0, 0),
@@ -312,7 +505,6 @@ ESPSection:AddColorPicker({
     end
 })
 
--- Tombol refresh ESP
 ESPSection:AddButton({
     Text = "Refresh ESP",
     Callback = function()
@@ -331,7 +523,7 @@ ESPSection:AddButton({
     end
 })
 
--- Auto update karakter untuk ESP
+-- Auto update for character
 game.Players.LocalPlayer.CharacterAdded:Connect(function()
     task.wait(1)
     if espEnabled then
